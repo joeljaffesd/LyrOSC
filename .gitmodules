@@ -1,0 +1,6 @@
+[submodule "dependencies/whisper.cpp"]
+	path = dependencies/whisper.cpp
+	url = https://github.com/ggml-org/whisper.cpp
+[submodule "dependencies/rtaudio"]
+	path = dependencies/rtaudio
+	url = https://github.com/thestk/rtaudio
