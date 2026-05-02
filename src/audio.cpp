@@ -338,24 +338,32 @@ bool DemoAudioSource::start(unsigned int, unsigned int, AudioCallback cb) {
     running_ = true;
     std::thread([this, cb = std::move(cb)]() {
         constexpr unsigned int CHUNK = TARGET_RATE / 10;  // 100 ms chunks
-        size_t pos = 0;
-        unsigned int report_interval = TARGET_RATE;  // log every ~1 second of audio
-        size_t next_report = report_interval;
-        while (running_ && pos < samples_.size()) {
+        size_t pos      = 0;
+        int    loop     = 0;
+        size_t next_report = TARGET_RATE;
+        while (running_) {
             size_t end = std::min(pos + CHUNK, samples_.size());
             cb(std::vector<float>(samples_.begin() + pos, samples_.begin() + end));
             pos = end;
+
             if (pos >= next_report) {
-                fprintf(stderr, "[demo] playback position: %.1f / %.1f s\n",
+                fprintf(stderr, "[demo] loop %d position: %.1f / %.1f s\n",
+                        loop,
                         static_cast<double>(pos) / TARGET_RATE,
                         static_cast<double>(samples_.size()) / TARGET_RATE);
-                next_report += report_interval;
+                next_report += TARGET_RATE;
             }
+
+            if (pos >= samples_.size()) {
+                ++loop;
+                fprintf(stderr, "[demo] looping (pass %d)\n", loop);
+                pos         = 0;
+                next_report = TARGET_RATE;
+            }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        fprintf(stderr, "[demo] playback finished (pos=%zu total=%zu)\n",
-                pos, samples_.size());
-        running_ = false;
+        fprintf(stderr, "[demo] playback stopped\n");
     }).detach();
     return true;
 }
